@@ -10,6 +10,7 @@ import express from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { registerCreatePostTool } from "./tools/createPost.js";
+import { registerPublishPostTool } from "./tools/publishPost.js";
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3333;
 
@@ -20,8 +21,7 @@ function buildServer(): McpServer {
   });
 
   registerCreatePostTool(server);
-  // registerPublishPostTool(server); // TODO: next tool
-
+  registerPublishPostTool(server);
   return server;
 }
 
