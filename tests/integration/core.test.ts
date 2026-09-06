@@ -109,6 +109,8 @@ test("sessions and API keys authenticate only their owning user", () => {
   const keys = new ApiKeyService(new ApiKeyRepository(db));
   const created = keys.createKey(user.id);
   assert.equal(keys.authenticateKey(created.key), user.id);
+  const storedKey = db.prepare("SELECT key_hash FROM api_keys WHERE id = ?").get(created.id) as { key_hash: string };
+  assert.notEqual(storedKey.key_hash, created.key);
   assert.equal(keys.revokeKeyForUser(otherUser.id, created.id), false);
   assert.equal(keys.authenticateKey(created.key), user.id);
   assert.equal(keys.revokeKeyForUser(user.id, created.id), true);

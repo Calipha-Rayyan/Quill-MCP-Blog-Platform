@@ -23,6 +23,24 @@ The server initializes SQLite and applies tracked migrations at startup. Use `DA
 - Public read-only routes are `GET /blog` and `GET /blog/:slug`. They exclusively use the public post-service methods, so draft and future-scheduled posts cannot be returned.
 - `GET /health` is a deployment health check.
 
+## MCP endpoint
+
+`POST /mcp` accepts authenticated MCP JSON-RPC requests using an API key in the
+`Authorization: Bearer <api-key>` header. It exposes the ten post and analytics
+tools listed by `tools/list`; tool requests never accept a `user_id`, because the
+API key establishes the user context.
+
+### SDK status
+
+The repository currently uses its existing, custom Streamable-HTTP-compatible
+JSON-RPC adapter in `src/mcp/server.ts`, not the official
+`@modelcontextprotocol/sdk`. On 2026-09-06, installation from this environment
+was blocked by the configured npm registry with `403 Forbidden` for
+`@modelcontextprotocol/sdk`; therefore the dependency and lockfile were not
+changed and this requirement remains outstanding. Replace the adapter with the
+official SDK's `StreamableHTTPServerTransport` once registry access is available;
+do not operate both transports in parallel.
+
 ## Checks
 
 ```bash
@@ -40,3 +58,7 @@ docker build -t quill .
 docker run --rm -p 3000:3000 -v quill-data:/data \
   -e SESSION_SECRET='replace-with-a-long-random-secret' quill
 ```
+
+The image sets `DATABASE_PATH=/data/quill.db` by default and preserves that
+directory through its `/data` volume. Override `PORT` when needed; the server and
+container health check both use it (publish the same container port accordingly).
