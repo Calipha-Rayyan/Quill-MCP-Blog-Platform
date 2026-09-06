@@ -21,7 +21,6 @@ The server initializes SQLite and applies tracked migrations at startup. Use `DA
   - `/api/account/api-keys` supports key creation, rotation, revocation, and safe key listing.
   - `GET /api/analytics` returns analytics totals for the authenticated user's posts.
 - Public read-only routes are `GET /blog` and `GET /blog/:slug`. They exclusively use the public post-service methods, so draft and future-scheduled posts cannot be returned.
-- MCP JSON-RPC requests are accepted at `POST /mcp` (or `MCP_BASE_PATH`). Authenticate each request with `Authorization: Bearer <Quill API key>`. The endpoint supports initialization, tool discovery, and the ten Quill post/SEO/analytics tools; tool identity is always derived from the API key.
 - `GET /health` is a deployment health check.
 
 ## Checks
