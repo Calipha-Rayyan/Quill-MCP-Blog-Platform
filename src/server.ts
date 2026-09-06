@@ -17,6 +17,7 @@ import { createPostRouter } from "./api/routes/postRoutes.js";
 import { createAccountRouter } from "./api/routes/accountRoutes.js";
 import { createAnalyticsRouter } from "./api/routes/analyticsRoutes.js";
 import { createPublicBlogRouter } from "./web/routes/publicBlogRoutes.js";
+import { createMcpRouter } from "./mcp/server.js";
 import { logger } from "./utils/logger.js";
 
 const port = Number(process.env.PORT ?? 3000);
@@ -51,6 +52,7 @@ app.use("/api/posts", sessionAuth(services.authService, sessionSecret), createPo
 app.use("/api/account", sessionAuth(services.authService, sessionSecret), createAccountRouter(services.apiKeyService));
 app.use("/api/analytics", sessionAuth(services.authService, sessionSecret), createAnalyticsRouter(services.analyticsService));
 app.use("/blog", createPublicBlogRouter(services.postService, services.analyticsService));
+app.use(process.env.MCP_BASE_PATH ?? "/mcp", createMcpRouter(services));
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== "test") {

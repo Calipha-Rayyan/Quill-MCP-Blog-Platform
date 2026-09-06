@@ -74,6 +74,26 @@ test("scheduled and unpublished posts are never returned publicly", () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
+test("a due scheduled post is published during public retrieval", () => {
+  const dir = mkdtempSync(join(tmpdir(), "quill-test-"));
+  const db = createDatabase(join(dir, "test.db"));
+  runMigrations(db);
+  const auth = new AuthService(new UserRepository(db));
+  const user = auth.registerUser("scheduler@example.com", "secure password");
+  const service = new PostService(new PostRepository(db));
+  const post = service.createPost(user.id, "Due scheduled post", "# Due");
+  service.schedulePost(user.id, post.id, new Date(Date.now() + 60_000).toISOString());
+  db.prepare("UPDATE posts SET scheduled_at = ? WHERE id = ?").run(new Date(Date.now() - 1_000).toISOString(), post.id);
+
+  const published = service.getPublishedPostBySlug(post.slug);
+  assert.equal(published?.status, "published");
+  assert.ok(published?.published_at);
+  assert.equal(published?.scheduled_at, null);
+
+  db.close();
+  rmSync(dir, { recursive: true, force: true });
+});
+
 test("sessions and API keys authenticate only their owning user", () => {
   const dir = mkdtempSync(join(tmpdir(), "quill-test-"));
   const db = createDatabase(join(dir, "test.db"));
