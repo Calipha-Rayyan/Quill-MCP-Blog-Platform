@@ -13,4 +13,8 @@ export class AnalyticsService {
       occurred_at: new Date().toISOString()
     });
   }
+
+  getAnalytics(userId: string): Array<{ post_id: string; event_count: number }> {
+    return this.analytics.countByPostForUser(userId);
+  }
 }

@@ -44,6 +44,8 @@ export class PostService {
     id: string,
     patch: Partial<Pick<Post, "title" | "content_md" | "slug" | "meta_title" | "meta_description">>
   ): Post | null {
+    if (patch.title !== undefined) assertNonEmpty(patch.title, "title");
+    if (patch.content_md !== undefined) assertNonEmpty(patch.content_md, "content");
     if (!this.posts.update(id, userId, patch)) return null;
     return this.posts.findByIdForUser(id, userId);
   }
@@ -63,22 +65,36 @@ export class PostService {
   }
 
   schedulePost(userId: string, id: string, publishAt: string): Post | null {
+    const scheduledAt = new Date(publishAt);
+    if (Number.isNaN(scheduledAt.getTime()) || scheduledAt <= new Date()) {
+      throw new Error("publishAt must be a future ISO-8601 date");
+    }
     if (!this.posts.findByIdForUser(id, userId)) return null;
-    this.posts.update(id, userId, { status: "scheduled", scheduled_at: publishAt });
+    this.posts.update(id, userId, {
+      status: "scheduled",
+      published_at: null,
+      scheduled_at: scheduledAt.toISOString()
+    });
     return this.posts.findByIdForUser(id, userId);
   }
 
   unpublishPost(userId: string, id: string): Post | null {
     if (!this.posts.findByIdForUser(id, userId)) return null;
-    this.posts.update(id, userId, { status: "draft", published_at: null });
+    this.posts.update(id, userId, { status: "draft", published_at: null, scheduled_at: null });
     return this.posts.findByIdForUser(id, userId);
   }
 
   listPublishedPosts(): Post[] {
+    this.publishDuePosts();
     return this.posts.listPublished();
   }
 
   getPublishedPostBySlug(slug: string): Post | null {
+    this.publishDuePosts();
     return this.posts.findPublishedBySlug(slug);
+  }
+
+  publishDuePosts(): number {
+    return this.posts.publishScheduledDue(new Date().toISOString());
   }
 }
