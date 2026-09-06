@@ -26,7 +26,8 @@ test("authenticated MCP endpoint exposes every tool and enforces ownership", asy
   const apiKeys = new ApiKeyService(new ApiKeyRepository(db));
   const postService = new PostService(new PostRepository(db));
   const analyticsService = new AnalyticsService(new AnalyticsRepository(db));
-  const keyA = apiKeys.createKey(userA.id).key;
+  const keyARecord = apiKeys.createKey(userA.id);
+  const keyA = keyARecord.key;
   const keyB = apiKeys.createKey(userB.id).key;
   const app = express();
   app.use(express.json());
@@ -44,7 +45,7 @@ test("authenticated MCP endpoint exposes every tool and enforces ownership", asy
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       body: JSON.stringify({ jsonrpc: "2.0", id: ++id, method, params })
     });
-    return { status: response.status, body: await response.json() as { result?: { tools?: Array<{ name: string }>; content?: Array<{ text: string }>; isError?: boolean } } };
+    return { status: response.status, body: await response.json() as { result?: { tools?: Array<{ name: string; inputSchema: object }>; content?: Array<{ text: string }>; isError?: boolean } } };
   };
   const tool = async (key: string, name: string, args: object = {}) => {
     const response = await rpc(key, "tools/call", { name, arguments: args });
@@ -57,9 +58,14 @@ test("authenticated MCP endpoint exposes every tool and enforces ownership", asy
     const initialized = await rpc(keyA, "initialize", { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "test", version: "1" } });
     assert.equal(initialized.body.result?.tools, undefined);
     const listed = await rpc(keyA, "tools/list");
-    assert.deepEqual(listed.body.result?.tools?.map((item) => item.name), [
+    const tools = listed.body.result?.tools;
+    assert.deepEqual(tools?.map((item) => item.name), [
       "create_post", "update_post", "delete_post", "list_posts", "get_post", "publish_post", "schedule_post", "unpublish_post", "manage_seo", "get_analytics"
     ]);
+    for (const toolDefinition of tools ?? []) {
+      assert.ok(toolDefinition.inputSchema);
+      assert.equal(JSON.stringify(toolDefinition.inputSchema).includes("user_id"), false);
+    }
 
     const created = await tool(keyA, "create_post", { title: "MCP post", content_md: "# MCP" });
     assert.equal(created.value.status, "draft");
@@ -86,6 +92,26 @@ test("authenticated MCP endpoint exposes every tool and enforces ownership", asy
 
     const unauthorized = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }) });
     assert.equal(unauthorized.status, 401);
+
+    const invalidRequest = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${keyA}` },
+      body: JSON.stringify({ jsonrpc: "1.0", id: 99, method: "tools/list" })
+    });
+    assert.equal(invalidRequest.status, 400);
+    assert.equal((await invalidRequest.json() as { error: { code: number } }).error.code, -32600);
+
+    const unknownMethod = await rpc(keyA, "resources/list");
+    assert.equal((unknownMethod.body as { error?: { code: number } }).error?.code, -32601);
+    assert.equal((await tool(keyA, "create_post", { title: "Missing content" })).isError, true);
+
+    apiKeys.revokeKeyForUser(userA.id, keyARecord.id);
+    const revoked = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${keyA}` },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 100, method: "tools/list" })
+    });
+    assert.equal(revoked.status, 401);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
     db.close();
