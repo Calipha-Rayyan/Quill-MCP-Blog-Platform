@@ -26,4 +26,17 @@ export class ApiKeyService {
   revokeKey(id: string): void {
     this.apiKeys.revoke(id, new Date().toISOString());
   }
+
+  revokeKeyForUser(userId: string, id: string): boolean {
+    return this.apiKeys.revokeForUser(id, userId, new Date().toISOString());
+  }
+
+  rotateKey(userId: string, id: string): { id: string; key: string } | null {
+    if (!this.revokeKeyForUser(userId, id)) return null;
+    return this.createKey(userId);
+  }
+
+  listKeys(userId: string) {
+    return this.apiKeys.listForUser(userId);
+  }
 }
