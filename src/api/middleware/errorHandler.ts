@@ -7,5 +7,6 @@ export function errorHandler(
   _next: NextFunction
 ): void {
   const message = error instanceof Error ? error.message : "Internal server error";
-  res.status(500).json({ error: message });
+  const isValidationError = error instanceof Error && /required|invalid|future|already registered/i.test(message);
+  res.status(isValidationError ? 400 : 500).json({ error: isValidationError ? message : "Internal server error" });
 }

@@ -32,7 +32,7 @@ export class PostRepository {
         WHERE user_id = ? AND status = ?
         ORDER BY updated_at DESC
         LIMIT ?
-      `).all(userId, status, safeLimit) as Post[];
+      `).all(userId, status, safeLimit) as unknown as Post[];
     }
 
     return this.db.prepare(`
@@ -40,7 +40,7 @@ export class PostRepository {
       WHERE user_id = ?
       ORDER BY updated_at DESC
       LIMIT ?
-    `).all(userId, safeLimit) as Post[];
+    `).all(userId, safeLimit) as unknown as Post[];
   }
 
   listPublished(): Post[] {
@@ -48,7 +48,7 @@ export class PostRepository {
       SELECT * FROM posts
       WHERE status = 'published'
       ORDER BY published_at DESC
-    `).all() as Post[];
+    `).all() as unknown as Post[];
   }
 
   findPublishedBySlug(slug: string): Post | null {
@@ -59,12 +59,27 @@ export class PostRepository {
     `).get(slug) as Post | undefined) ?? null;
   }
 
+  publishScheduledDue(now: string): number {
+    const result = this.db.prepare(`
+      UPDATE posts
+      SET status = 'published', published_at = scheduled_at, scheduled_at = NULL, updated_at = ?
+      WHERE status = 'scheduled' AND scheduled_at <= ?
+    `).run(now, now);
+    return Number(result.changes);
+  }
+
   update(
     id: string,
     userId: string,
     patch: Partial<Pick<Post, "title" | "slug" | "content_md" | "status" | "meta_title" | "meta_description" | "published_at" | "scheduled_at">>
   ): boolean {
-    const entries = Object.entries(patch).filter(([, value]) => value !== undefined);
+    const allowedFields = new Set([
+      "title", "slug", "content_md", "status", "meta_title", "meta_description",
+      "published_at", "scheduled_at"
+    ]);
+    const entries = Object.entries(patch).filter(
+      ([field, value]) => allowedFields.has(field) && value !== undefined
+    );
     if (entries.length === 0) return false;
 
     const fields = entries.map(([field]) => `${field} = ?`).join(", ");
