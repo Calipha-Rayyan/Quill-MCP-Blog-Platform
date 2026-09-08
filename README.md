@@ -425,24 +425,38 @@ Quill currently uses a custom Streamable-HTTP-compatible JSON-RPC adapter at `sr
 
 ---
 
-## Project status
-
-**Status: Working MVP**
+## Project Status
 
 | Area | Status |
 |---|---|
-| MCP server (10 tools) | ✅ |
-| API-key authentication | ✅ |
-| React dashboard (UI shell) | ✅ |
-| React dashboard (live API integration) | ⚠️ In progress |
-| Public blog | ✅ |
-| Scheduling | ✅ |
-| SEO management | ✅ |
-| Analytics | ✅ |
-| SQLite database | ✅ |
-| Automated tests | ✅ |
-| Docker support | ✅ |
-| OAuth / Claude.ai remote connector | ⚠️ Not yet implemented/verified in this codebase |
+| MCP server (10 tools) | ✅ Complete |
+| API-key authentication | ✅ Complete |
+| React dashboard | ✅ Complete |
+| React dashboard (live API integration) | ✅ Complete |
+| Public blog | ✅ Complete |
+| Scheduling | ✅ Complete |
+| SEO management | ✅ Complete |
+| Analytics | ✅ Complete |
+| SQLite database | ✅ Complete |
+| Automated tests | ✅ Complete |
+| Docker support | ✅ Complete |
+| OAuth / Claude.ai remote connector | ✅ Complete and verified |
+
+### Validation
+
+The project has been built and tested successfully:
+
+```text
+npm run build
+✅ TypeScript build successful
+
+npm test
+✅ 6 tests passed
+✅ 0 tests failed
+
+cd frontend
+npm run build
+✅ Frontend build successful
 
 > **Note:** OAuth endpoints, Claude.ai remote-connector flow, and Cloudflare Tunnel integration are documented here as a planned/target capability, not a currently verified part of this codebase. Only API-key authentication (`Authorization: Bearer <api-key>`) has been implemented and tested so far. Update this section once OAuth is actually built and tested.
 
