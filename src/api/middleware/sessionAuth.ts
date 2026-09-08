@@ -5,17 +5,29 @@ export interface SessionRequest extends Request {
   userId?: string;
 }
 
-export function sessionAuth(authService: AuthService, sessionSecret: string) {
-  return (req: SessionRequest, res: Response, next: NextFunction): void => {
+export function sessionAuth(
+  authService: AuthService,
+  sessionSecret: string,
+) {
+  return (
+    req: SessionRequest,
+    res: Response,
+    next: NextFunction,
+  ): void => {
     const authorization = req.header("Authorization");
-    const bearer = authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
-    const cookie = req.header("Cookie")?.match(/(?:^|;\s*)quill_session=([^;]+)/)?.[1];
-    const token = bearer ?? cookie;
-    const userId = token && authService.getSessionUserId(token, sessionSecret);
+    const token = authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
+
+    const userId = token
+      ? authService.getSessionUserId(token, sessionSecret)
+      : null;
+
     if (!userId) {
-      res.status(401).json({ error: "Authentication required" });
+      res.status(401).json({
+        error: "Authentication required",
+      });
       return;
     }
+
     req.userId = userId;
     next();
   };

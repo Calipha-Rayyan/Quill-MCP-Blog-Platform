@@ -1,12 +1,8 @@
-import type { ReactNode } from "react";
+import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
-interface DashboardLayoutProps {
-  children: ReactNode;
-}
-
-function DashboardLayout({ children }: DashboardLayoutProps) {
+function DashboardLayout() {
   return (
     <div className="app-shell">
       <Sidebar />
@@ -14,8 +10,8 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="main-shell">
         <Topbar />
 
-        <div className="page-content">
-          {children}
+        <div className="main-content">
+          <Outlet />
         </div>
       </div>
     </div>
