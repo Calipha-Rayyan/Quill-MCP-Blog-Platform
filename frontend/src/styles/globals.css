@@ -1,5 +1,6 @@
 @import "./tokens.css";
 @import "./layout.css";
+@import "./dashboard.css";
 
 * {
   box-sizing: border-box;
