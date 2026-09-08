@@ -457,6 +457,7 @@ npm test
 cd frontend
 npm run build
 ✅ Frontend build successful
+```
 
 > **Note:** OAuth endpoints, Claude.ai remote-connector flow, and Cloudflare Tunnel integration are documented here as a planned/target capability, not a currently verified part of this codebase. Only API-key authentication (`Authorization: Bearer <api-key>`) has been implemented and tested so far. Update this section once OAuth is actually built and tested.
 
